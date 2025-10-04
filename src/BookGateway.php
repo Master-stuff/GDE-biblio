@@ -7,8 +7,6 @@ class BookGateway {
         $this->conn = $database->getConnection();
     }
 
-    // Lists All books //
-
     public function getAll(): array {
         $sql = "SELECT * FROM books";
 
@@ -22,8 +20,6 @@ class BookGateway {
 
         return $data;
     }
-
-    // Adds a book to books table //
 
     public function create(array $data): string {
         $sql = "INSERT INTO books (title, owner_id, language, isbn, genre, description, author, cover_image)
@@ -78,5 +74,19 @@ class BookGateway {
         $stmt->execute();
 
         return $stmt->rowCount();
+    }
+
+    public function getByOwner($owner_id): array {
+        $sql = "SELECT * FROM books where owner_id = :owner_id";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(":owner_id", (int) $owner_id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $data;
     }
 }

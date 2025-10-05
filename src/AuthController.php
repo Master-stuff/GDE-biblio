@@ -80,54 +80,96 @@ class AuthController {
                 break;
 
             case "me":
-                if ($method !== "GET") {
-                    http_response_code(405);
-                    echo json_encode(["error" => "Method not allowed"]);
-                    return;
-                }
+                if ($method === "PUT"){
+                    $headers = getallheaders();
+                    $auth = $headers["Authorization"] ?? "";
+                    
+                    if (!preg_match('/Bearer\s(\S+)/', $auth, $matches)) {
+                        http_response_code(401);
+                        echo json_encode(["error" => "Missing or invalid token"]);
+                        return;
+                    }
+                    
+                    
+                    $token = $matches[1];
+                    $payload = $jwtManager->decodeToken($token);
+                    
+                    if (!$payload) {
+                        http_response_code(401);
+                        echo json_encode($payload);
+                        echo json_encode(["error" => "Invalid or expired token"]);
+                        return;
+                    }
+                    
+                    $errors = ValidationErrors::validateUpdate($data, $this->gateway);
+                    if (!empty($errors)) {
+                        http_response_code(400);
+                        echo json_encode(["errors" => $errors]);
+                        return;
+                    }
 
-                $headers = getallheaders();
-                $auth = $headers["Authorization"] ?? "";
+                    $updated = $this->gateway->updateUser($this->gateway->getUserById($payload['id']), $data);
 
-                if (!preg_match('/Bearer\s(\S+)/', $auth, $matches)) {
-                    http_response_code(401);
-                    echo json_encode(["error" => "Missing or invalid token"]);
-                    return;
-                }
+                    if ($updated) {
+                        http_response_code(201);
+                        echo json_encode(["message" => "update $updated users"]);
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(["error" => "User registration failed"]);
+                    }
 
+                } else if ($method === "GET"){
 
-                $token = $matches[1];
-                $payload = $jwtManager->decodeToken($token);
-
-                if (!$payload) {
-                    http_response_code(401);
-                    echo json_encode($payload);
-                    echo json_encode(["error" => "Invalid or expired token"]);
-                    return;
-                }
-
-                if ($request[1] === "books") {
-                    echo json_encode($this->gatebook->getByOwner($payload['id']));
+                    $headers = getallheaders();
+                    $auth = $headers["Authorization"] ?? "";
+                    
+                    if (!preg_match('/Bearer\s(\S+)/', $auth, $matches)) {
+                        http_response_code(401);
+                        echo json_encode(["error" => "Missing or invalid token"]);
+                        return;
+                    }
+                    
+                    
+                    $token = $matches[1];
+                    $payload = $jwtManager->decodeToken($token);
+                    
+                    if (!$payload) {
+                        http_response_code(401);
+                        echo json_encode($payload);
+                        echo json_encode(["error" => "Invalid or expired token"]);
+                        return;
+                    }
+                    
+                    if ($request[1] === "books") {
+                        echo json_encode($this->gatebook->getByOwner($payload['id']));
+                    } else {
+                        $user = $this->gateway->getUserById($payload['id']);
+                        $user['password'] = $user['pwd'];
+                        unset($user['pwd']);
+                        echo json_encode($user);
+                    }
+                    
                 } else {
-                    echo json_encode($this->gateway->getUserById($payload['id']));
+                        http_response_code(405);
+                        echo json_encode(["error" => "Method not allowed"]);
+                        return;
                 }
-                
                 break;
 
             default:
-                if (is_numeric($request[0])) {
+                if (is_numeric($request[0]) && !$request[1]) {
                     if ($method !== "GET") {
                         http_response_code(405);
                         echo json_encode(["error" => "Method not allowed"]);
                         return;
                     }
 
-                    $id = (int)$request;
+                    $id = (int) $request[0];
 
-                    // TODO: implement getUserById in AuthGateway
                     $user = $this->gateway->getUserById($id);
 
                     if ($user) {
+                        unset($user['pwd']);
                         echo json_encode($user);
                     } else {
                         http_response_code(404);
@@ -137,24 +179,6 @@ class AuthController {
                     http_response_code(404);
                     echo json_encode(["error" => "Not found"]);
                 }
-        }
-    }
-    private function getValidationErrors(array $data, bool $is_new) {
-        $errors = [];
-
-        if ($is_new) {
-            if (empty($data['email']) ||
-                empty($data['username']) ||
-                empty($data['first_name']) ||
-                empty($data['last_name']) ||
-                empty($data['password'])) {
-
-                $errors[] = "Data Missing";
-            }
-
-            if (strlen($data['password'])) {
-                $errors[] = "password too short";
-            }
         }
     }
 }

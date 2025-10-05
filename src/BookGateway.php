@@ -89,4 +89,14 @@ class BookGateway {
 
         return $data;
     }
+
+    public function delete($id): void {
+        $sql = "DELETE FROM books WHERE id = :id;";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue("id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+    }
 }

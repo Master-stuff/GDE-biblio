@@ -38,6 +38,20 @@ class AuthGateway {
         return $data;
     }
 
+    public function getUserByUsername($username) {
+        $sql = "SELECT * FROM users WHERE username = :usern";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(":usern", $username, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $data;
+    }
+
     public function getUserById($id) {
         $sql = "SELECT * FROM users WHERE id = :id";
 
@@ -65,4 +79,24 @@ class AuthGateway {
         }
     }
     
+    public function updateUser ($current, $new) {
+        $sql = "UPDATE users
+            SET first_name = :first_name,
+                last_name = :last_name,
+                username = :username,
+                pwd = :pwd
+            WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(":first_name", $new['first_name'] ?? $current['first_name'], PDO::PARAM_STR);
+        $stmt->bindValue(":last_name", $new['last_name'] ?? $current['last_name'], PDO::PARAM_STR);
+        $stmt->bindValue(":username", $new['username'] ?? $current['username'], PDO::PARAM_STR);
+        $stmt->bindValue(":pwd", $new['password'] ?? $current['password'], PDO::PARAM_STR);
+        $stmt->bindValue(":id", $current['id'], PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount();
+    }
 }

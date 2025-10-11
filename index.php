@@ -30,12 +30,23 @@ if ($parts[2] == "books") {
     $request = [$parts[3] ?? null, $parts[4] ?? null];
     
     $gateway = new AuthGateway($database);
+
     $gatebook = new BookGateway($database);
     
     $controller = new AuthController($gateway, $gatebook);
     
     $controller->processRequest($request, $_SERVER['REQUEST_METHOD']);
 
+}else if ($parts[2] == "loans"){
+    $request = [$parts[3] ?? null, $parts[4] ?? null];
+    
+    $gateway = new LoansGateway($database);
+
+    $gatebook = new BookGateway($database);
+    
+    $controller = new LoansController($gateway, $gatebook);
+    
+    $controller->processRequest($request, $_SERVER['REQUEST_METHOD']);
 } else {
     http_response_code(404);
     exit;

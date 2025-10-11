@@ -157,24 +157,27 @@ class AuthController {
                 break;
 
             default:
-                if (is_numeric($request[0]) && !$request[1]) {
+                if (is_numeric($request[0])) {
                     if ($method !== "GET") {
                         http_response_code(405);
                         echo json_encode(["error" => "Method not allowed"]);
                         return;
                     }
 
-                    $id = (int) $request[0];
-
-                    $user = $this->gateway->getUserById($id);
-
-                    if ($user) {
-                        unset($user['pwd']);
-                        echo json_encode($user);
+                    if ($request[1] === "books") {
+                        echo json_encode($this->gatebook->getByOwner($request[0]));
                     } else {
-                        http_response_code(404);
-                        echo json_encode(["error" => "User not found"]);
+                        $user = $this->gateway->getUserById($request[0]);
+    
+                        if ($user) {
+                            unset($user['pwd']);
+                            echo json_encode($user);
+                        } else {
+                            http_response_code(404);
+                            echo json_encode(["error" => "User not found"]);
+                        }
                     }
+
                 } else {
                     http_response_code(404);
                     echo json_encode(["error" => "Not found"]);

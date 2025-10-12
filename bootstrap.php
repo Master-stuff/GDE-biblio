@@ -8,7 +8,7 @@ set_exception_handler('ErrorHandler::handleException');
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__ . "/api/"));
 $dotenv->load();
 
-$required_env = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS', 'SECRET_KEY'];
+$required_env = ['DB_HOST', 'DB_NAME', 'DB_USER', 'SECRET_KEY'];
 foreach ($required_env as $var) {
     if (empty($_ENV[$var])) {
         throw new RuntimeException("Missing required environment variable: {$var}");
